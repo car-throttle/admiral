@@ -11,12 +11,13 @@ tasks without the need to run a master.
 Take a structure like so:
 
 ```
-very-important-tasks
-[ id-1 ][ 1 minute ]
-[ id-2 ][ 3 minutes ]
-[ id-3 ][ 4 minutes ]
-[ id-4 ][ 2 minutes ]
-[ id-5 ][ 1 minute ]
+== very-important-tasks ==
+
+[ id-1 ][  1 minute  ]
+[ id-2 ][  3 minutes ]
+[ id-3 ][  4 minutes ]
+[ id-4 ][  2 minutes ]
+[ id-5 ][  1 minute  ]
 [ id-6 ][ 12 minutes ]
 ```
 

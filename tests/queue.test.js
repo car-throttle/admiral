@@ -207,18 +207,61 @@ describe('queue', function () {
     var members = [];
 
     before(function (done) {
-      redis.redis.ZRANGE('admiral-tests:karaoke', 0, -1, function (err, list) {
-        if (!err) members = list;
-        done(err);
-      });
+      async.series([
+
+        function (callback) {
+          async.each([ 'id-1', 'id-2', 'id-3' ], function (item, next) {
+            queue.create('karaoke', item, next);
+          }, callback);
+        },
+
+        function (callback) {
+          redis.redis.ZRANGE('admiral-tests:karaoke', 0, -1, function (err, list) {
+            if (!err) members = list;
+            callback(err);
+          });
+        }
+
+      ], done);
     });
 
-    it('should process a job correctly', function (done) {
-      process.call(queue, 'karaoke', function (job, callback) {
+    var run = function (worker_name, worker_fn) {
+      return function (callback) {
+        var ran = false;
+        process.call(queue, worker_name, function (job, done) {
+          ran = true;
+          worker_fn(job, done);
+        }, function (err) {
+          if (err) return callback(err);
+
+          assert.ok(ran, 'Failed to run the worker fn for ' + worker_name);
+          callback();
+        });
+      };
+    };
+
+    it('should process a job correctly', run('karaoke', function (job, callback) {
+      assert.ok(members.indexOf(job.id) >= 0);
+      callback();
+    }));
+
+    it('should extend a lock successfully', run('karaoke', function (job, callback) {
+      job.extend('2m', function (err) {
+        if (err) return callback(err);
+
         assert.ok(members.indexOf(job.id) >= 0);
-        callback('5m');
-      }, done);
-    });
+        callback(null, '5m');
+      });
+    }));
+
+    it('should let you unlock a job during the worker function', run('karaoke', function (job, callback) {
+      job.unlock(function (err) {
+        if (err) return callback(err);
+
+        assert.ok(members.indexOf(job.id) >= 0);
+        callback(null, '5m');
+      });
+    }));
 
   });
 

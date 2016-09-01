@@ -1,0 +1,9 @@
+machine:
+  environment:
+    NODE_ENV: testing
+  node:
+    version: 4.2.4
+  timezone: Atlantic/Reykjavik
+test:
+  override:
+    - npm test

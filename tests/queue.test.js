@@ -9,8 +9,8 @@ var redis = redisLib.createClient();
 
 describe('queue', function () {
   var queue = new Queue({
-    prefix: 'admiral-tests',
-    redis: redis
+    client: redis,
+    prefix: 'admiral-tests'
   });
 
   after(function (done) {
@@ -20,7 +20,7 @@ describe('queue', function () {
   describe('constructor', function () {
 
     it('should create a queue successfully', function () {
-      var created = new Queue({ redis: redis });
+      var created = new Queue({ client: redis });
 
       assert.deepEqual(Object.keys(created), [ 'default_wait', 'lock_time', 'prefix', 'redis', 'redlock', 'events' ]);
 

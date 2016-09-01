@@ -2,11 +2,12 @@ var assert = require('assert');
 var async = require('async');
 var EventEmitter = require('events');
 var ms = require('ms');
+var redis = require('./lib.redis');
 var redisLib = require('redis');
 var Redlock = require('redlock');
+var rewire = require('rewire');
 
-var Queue = require('../lib/queue');
-var redis = require('./lib.redis');
+var Queue = rewire('../lib/queue');
 
 describe('queue', function () {
   var queue = new Queue({
@@ -197,6 +198,26 @@ describe('queue', function () {
         ]);
         done();
       });
+    });
+
+  });
+
+  describe('#process', function () {
+    var process = Queue.__get__('onEachTick');
+    var members = [];
+
+    before(function (done) {
+      redis.redis.ZRANGE('admiral-tests:karaoke', 0, -1, function (err, list) {
+        if (!err) members = list;
+        done(err);
+      });
+    });
+
+    it('should process a job correctly', function (done) {
+      process.call(queue, 'karaoke', function (job, callback) {
+        assert.ok(members.indexOf(job.id) >= 0);
+        callback('5m');
+      }, done);
     });
 
   });

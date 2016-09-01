@@ -1,5 +1,7 @@
 # Admiral
 
+[![Circle CI](https://circleci.com/gh/car-throttle/admiral/tree/master.svg?style=shield)](https://circleci.com/gh/car-throttle/admiral/tree/master)
+
 Admiral is a distributed job-scheduling library in Node.JS, so you can run a function at regular intervals without
 needing to queue "job" in a standard queue infrastructure with a CRON.
 

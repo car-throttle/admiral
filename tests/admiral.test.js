@@ -14,12 +14,7 @@ describe('admiral', function () {
           return Object.assign({ type: 'QUEUE' }, opts);
         },
         redis: {
-          createClient: function (opts) {
-            assert.deepEqual(opts, {
-              host: 'localhost',
-              port: 6379
-            });
-
+          createClient: function () {
             return 'REDIS';
           }
         }
@@ -56,6 +51,27 @@ describe('admiral', function () {
         },
         client: 'REDIS'
       });
+    });
+
+    it('should create a Queue with a new Redis connection with all defaults', function () {
+      var queue = admiral.createQueue();
+
+      assert.deepEqual(queue, {
+        type: 'QUEUE',
+        client: 'REDIS'
+      });
+    });
+
+    it('should throw if Redis isn\'t installed alongside of Admiral and a client isn\'t specified', function () {
+      var err = null;
+      var revert = admiral.__set__('redis', null);
+
+      try { admiral.createQueue(); }
+      catch (e) { err = e; }
+
+      assert.ok(err instanceof Error);
+      assert.equal(err.message, 'Redis not installed');
+      revert();
     });
 
   });

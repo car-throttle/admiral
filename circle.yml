@@ -10,3 +10,4 @@ test:
   override:
     - npm test
     - npm run coveralls
+    - redis-cli FLUSHALL

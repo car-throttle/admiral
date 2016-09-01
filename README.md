@@ -80,6 +80,10 @@ admiral.createQueue({
 });
 ```
 
+If you pass both `client` **and** `redis` properties, the existing `client` will take precedence over the `redis`
+options. Most of the time, unless you're certain about what you're doing, you'll probably want to have a separate Redis
+connection for Admiral.
+
 ### Queuing IDs
 
 ```js
@@ -102,21 +106,85 @@ queue.exists('very-important-tasks', 'id-1', function (err, exists) {
 ### Removing an ID from the queue
 
 ```js
-queue.remove('very-important-tasks', 'id-1', function (err) {
-
-});
+queue.remove('very-important-tasks', 'id-1', function (err) { });
 ```
 
 ### Updating the next-run-time for an ID in the queue
 
 ```js
-queue.update('very-important-tasks', 'id-1', Date.now(), function (err) {
-
-});
+queue.update('very-important-tasks', 'id-1', Date.now(), function (err) { });
 ```
 
 ### Getting the next-run time for an ID in the queue
 
+```js
+queue.get('very-important-tasks', 'id-1', function (err, timestamp) { });
+```
+
+### Return all the IDs for a queue
+
+```js
+queue.list('very-important-tasks', function (err, ids) {
+  console.log(ids); // [ 'id-1' ]
+});
+```
+
 ### Stats
 
+This returns the number of items in each sorted set.
+
+```js
+queue.stats(function (err, stats) {
+  console.log(stats); // [ { type: 'very-important-tasks', count: 1 } ]
+});
+```
+
+*Future:* Return how many items are currently being processed (requires more calls & structures in Redis)
+
 ### Processing
+
+The `process` method takes a function and will run each ID through this function, once an exclusive lock has been
+successfully acquired with redlock.
+
+```js
+queue.process('very-important-tasks', function (job, callback) {
+  console.log(job.id); // The ID of the entry ("id-1")
+  console.log(job.timestamp); // The UNIX timestamp it was supposed to run at
+
+  job.extend('2m', function (err) {
+    // A method to extend the amount of time the lock is held for
+    // AS PER REDLOCK LIMITATIONS, you must extend the lock whist the lock is still acquired
+    // If the lock has expired, you won't be able to extend the lock (and an error will be returned)
+  });
+
+  job.unlock(function (err) {
+    // Optionally, you can release the lock in your own code
+    // If you do, there is a chance another worker could pick up this job WHILST this worker still has this job
+    // Use with caution
+  });
+
+  callback(err, '10m'); // Any errors passed here will be emitted with as a "job error" event
+  // You can also pass an offset to push back this job a certain amount (overriding the default_wait time)
+});
+```
+
+## Events
+
+There is an `EventEmitter` within the queue, so you can listen on events within the queue.
+
+```js
+queue.on('error', function (err) {
+  // Returns errors from within queue.process
+  // Usually Redis errors, errors from the sorted-set operations
+  // And redlock errors when failing to acquire locks
+});
+
+queue.on('job error', function (err) {
+  // Any errors passed back to the callback in the function passed to queue.process will be emitted here
+});
+```
+
+## Notes
+
+- `8s`, `5m`, `8h`, `3 days` confusing you? Check out [`ms`](https://npm.im/ms), an amazing ms conversion library!
+- Questions? Awesome! [Open an issue](https://github.com/car-throttle/admiral) to get started!

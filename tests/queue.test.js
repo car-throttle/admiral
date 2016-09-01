@@ -150,7 +150,7 @@ describe('queue', function () {
           }, callback);
         },
         redis.assertEqualSMEMBERS('admiral-tests:list', [ 'karaoke', 'netsky' ]),
-        redis.assertEqualZMEMBERS('admiral-tests:netsky', NETSKY.sort()),
+        redis.assertEqualZMEMBERS('admiral-tests:netsky', NETSKY),
       ], done);
     });
 

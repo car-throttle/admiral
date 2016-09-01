@@ -24,6 +24,8 @@ if (process.argv.slice(2).length) {
   });
 }
 
+var count = 1;
+
 queue.on('error', function (err) {
   console.error('ERR:', err);
 });
@@ -31,7 +33,7 @@ queue.on('error', function (err) {
 queue.process('task', function (job, callback) {
   console.log('Processing %s that was queued at %s', job.id, job.timestamp);
   setTimeout(function () {
-    console.log('Finished %s', job.id);
+    console.log('Finished #%d %s', count++, job.id);
     callback();
   }, ms('25s'));
 });

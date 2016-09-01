@@ -16,26 +16,27 @@ var queue = admiral.createQueue({
 });
 
 if (process.argv.slice(2).length) {
-  return async.eachSeries(process.argv.slice(2), function (item, nextItem) {
+  async.eachSeries(process.argv.slice(2), function (item, nextItem) {
     queue.create('task', item, nextItem);
   }, function (err) {
     if (err) throw err;
     process.exit(0);
   });
 }
+else {
+  var count = 1;
 
-var count = 1;
+  queue.on('error', function (err) {
+    console.error('ERR:', err);
+  });
 
-queue.on('error', function (err) {
-  console.error('ERR:', err);
-});
+  queue.process('task', function (job, callback) {
+    console.log('Processing %s that was queued at %s', job.id, job.timestamp);
+    setTimeout(function () {
+      console.log('Finished #%d %s', count++, job.id);
+      callback();
+    }, ms('25s'));
+  });
 
-queue.process('task', function (job, callback) {
-  console.log('Processing %s that was queued at %s', job.id, job.timestamp);
-  setTimeout(function () {
-    console.log('Finished #%d %s', count++, job.id);
-    callback();
-  }, ms('25s'));
-});
-
-console.log('Waiting for work..');
+  console.log('Waiting for work..');
+}
